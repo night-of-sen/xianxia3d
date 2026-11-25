@@ -19,9 +19,13 @@ export type RiderMode = 'none' | '3d' | '2.5d'
 export type RiderPose = 'stand' | 'charge' | 'meditate' | 'salute'
 /** 3D 剑仙衣袍配色 */
 export type RobeTheme = 'white' | 'jade' | 'dark'
+/** 手机端自由模式操控方式：joystick = 虚拟摇杆；gyro = 陀螺仪体感（互斥，开陀螺仪自动隐藏摇杆） */
+export type MobileControlMode = 'joystick' | 'gyro'
 
 interface GameState {
   mode: GameMode
+  mobileControlMode: MobileControlMode
+  menuOpen: boolean
   viewMode: ViewMode
   shot: CameraShot
   activeShot: ActiveShot
@@ -46,6 +50,9 @@ interface GameState {
 
   toggleMode: () => void
   setMode: (mode: GameMode) => void
+  setMobileControlMode: (m: MobileControlMode) => void
+  toggleMenu: () => void
+  setMenuOpen: (v: boolean) => void
   cycleViewMode: () => void
   setViewMode: (v: ViewMode) => void
   setShot: (shot: CameraShot) => void
@@ -76,6 +83,8 @@ const POSE_ORDER: RiderPose[] = ['stand', 'charge', 'meditate', 'salute']
 
 export const useGameStore = create<GameState>((set) => ({
   mode: 'free',
+  mobileControlMode: 'joystick',
+  menuOpen: false,
   viewMode: 'third',
   shot: 'auto',
   activeShot: 'orbit',
@@ -99,6 +108,9 @@ export const useGameStore = create<GameState>((set) => ({
 
   toggleMode: () => set((s) => ({ mode: s.mode === 'free' ? 'director' : 'free' })),
   setMode: (mode) => set({ mode }),
+  setMobileControlMode: (mobileControlMode) => set({ mobileControlMode }),
+  toggleMenu: () => set((s) => ({ menuOpen: !s.menuOpen })),
+  setMenuOpen: (menuOpen) => set({ menuOpen }),
   cycleViewMode: () =>
     set((s) => ({ viewMode: VIEW_ORDER[(VIEW_ORDER.indexOf(s.viewMode) + 1) % VIEW_ORDER.length] })),
   setViewMode: (viewMode) => set({ viewMode }),

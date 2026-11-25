@@ -7,21 +7,20 @@ import type { ActiveShot } from '../../store/useGameStore'
  */
 export function createDirectorCurve(): THREE.CatmullRomCurve3 {
   const pts = [
-    new THREE.Vector3(0, 15, 34), // 起势：正对主仙山亭台
-    new THREE.Vector3(24, 18, -16), // 掠过主峰右侧飞檐
-    new THREE.Vector3(-22, 16, -62), // 穿越主岛与二号岛石桥上方
-    new THREE.Vector3(-82, 26, -98), // 绕行二号岛峭壁
-    new THREE.Vector3(-42, 42, -172), // 爬升俯瞰四号巨岛
-    new THREE.Vector3(38, 36, -210), // 穿行中远景仙山之间
-    new THREE.Vector3(96, 12, -168), // 俯冲掠过三号岛悬瀑
-    new THREE.Vector3(64, -9, -92), // 低空贴近云海穿云破雾
-    new THREE.Vector3(16, -6, -4), // 贴云滑行
-    new THREE.Vector3(-46, 12, 32), // 破云拉升，回望仙山群
+    new THREE.Vector3(0, 15, 34),
+    new THREE.Vector3(24, 18, -16),
+    new THREE.Vector3(-22, 16, -62),
+    new THREE.Vector3(-82, 26, -98),
+    new THREE.Vector3(-42, 42, -172),
+    new THREE.Vector3(38, 36, -210),
+    new THREE.Vector3(96, 12, -168),
+    new THREE.Vector3(64, -9, -92),
+    new THREE.Vector3(16, -6, -4),
+    new THREE.Vector3(-46, 12, 32),
   ]
   return new THREE.CatmullRomCurve3(pts, true, 'centripetal', 0.5)
 }
 
-/** 在闭合样条曲线上查找距离给定点最近的参数 t ∈ [0, 1) */
 export function findNearestT(curve: THREE.CatmullRomCurve3, target: THREE.Vector3, samples = 120): number {
   let bestT = 0
   let bestDist = Infinity
@@ -39,79 +38,73 @@ export function findNearestT(curve: THREE.CatmullRomCurve3, target: THREE.Vector
 }
 
 export const AUTO_SHOT_ORDER: ActiveShot[] = ['orbit', 'flank', 'dive', 'wide']
-export const AUTO_SHOT_DURATION = 7.5 // 每个电影镜头自动停留秒数
-
-export interface ShotResult {
-  camPos: THREE.Vector3
-  lookAt: THREE.Vector3
-  fov: number
-}
+export const AUTO_SHOT_DURATION = 7.5
 
 const _right = new THREE.Vector3()
 const _up = new THREE.Vector3(0, 1, 0)
 
 /**
- * 计算导演模式各电影机位的目标位置、注视点与视野：
- * - orbit: 360° 优雅环绕特写
- * - dive : 尾翼俯冲穿云（强速度感）
- * - flank: 侧前方低角度高速掠影
- * - wide : 宏阔水墨大远景
+ * 计算导演模式各电影机位：
+ * - 所有机位紧盯飞剑/剑主本体（避免窄屏手机上飞剑甩出左右视野）
+ * - 当画布为竖屏（aspect < 1）时自动拉宽垂直视野与微调距离，确保飞剑 100% 稳居画面中心
  */
 export function computeDirectorCamera(
   shot: ActiveShot,
   swordPos: THREE.Vector3,
   swordFwd: THREE.Vector3,
   elapsed: number,
+  aspect: number,
   outPos: THREE.Vector3,
   outLook: THREE.Vector3,
 ): number {
   _right.crossVectors(swordFwd, _up).normalize()
   if (_right.lengthSq() < 1e-4) _right.set(1, 0, 0)
 
+  const portraitBoost = aspect < 0.9 ? 1.25 : 1.0
+  const fovBonus = aspect < 0.9 ? 10 : 0
+
   switch (shot) {
     case 'orbit': {
-      const ang = elapsed * 0.48
-      const r = 10.5
+      const ang = elapsed * 0.45
+      const r = 9.5 * portraitBoost
       outPos.set(
         swordPos.x + Math.cos(ang) * r,
-        swordPos.y + 2.8 + Math.sin(elapsed * 0.6) * 1.4,
+        swordPos.y + 2.6 + Math.sin(elapsed * 0.6) * 1.1,
         swordPos.z + Math.sin(ang) * r,
       )
-      outLook.copy(swordPos).addScaledVector(swordFwd, 2.5)
-      return 50
+      // 紧盯飞剑中心偏前一点，绝不偏出屏幕
+      outLook.copy(swordPos).addScaledVector(swordFwd, 0.8)
+      return 52 + fovBonus
     }
     case 'dive': {
-      // 略高于剑尾并随呼吸轻微摆动，强化俯冲穿云的冲击力
-      const sway = Math.sin(elapsed * 0.9) * 1.8
+      const sway = Math.sin(elapsed * 0.85) * (aspect < 0.9 ? 0.9 : 1.6)
       outPos
         .copy(swordPos)
-        .addScaledVector(swordFwd, -8.5)
+        .addScaledVector(swordFwd, -8.5 * portraitBoost)
         .addScaledVector(_right, sway)
-        .addScaledVector(_up, 3.6 + Math.cos(elapsed * 0.7) * 0.8)
-      outLook.copy(swordPos).addScaledVector(swordFwd, 18)
-      return 68
+        .addScaledVector(_up, 3.2 + Math.cos(elapsed * 0.7) * 0.6)
+      outLook.copy(swordPos).addScaledVector(swordFwd, 3.2)
+      return 64 + fovBonus
     }
     case 'flank': {
-      // 侧前方回望飞剑与流光拖尾，构图极具电影感
       const side = Math.sin(elapsed * 0.25) >= 0 ? 1 : -1
       outPos
         .copy(swordPos)
-        .addScaledVector(swordFwd, 5.5)
-        .addScaledVector(_right, side * 9.5)
-        .addScaledVector(_up, 1.4 + Math.sin(elapsed * 0.8) * 1.0)
-      outLook.copy(swordPos).addScaledVector(swordFwd, -2.5)
-      return 48
+        .addScaledVector(swordFwd, 4.2 * portraitBoost)
+        .addScaledVector(_right, side * 8.2 * portraitBoost)
+        .addScaledVector(_up, 1.5 + Math.sin(elapsed * 0.8) * 0.8)
+      outLook.copy(swordPos).addScaledVector(swordFwd, -0.5)
+      return 50 + fovBonus
     }
     case 'wide': {
-      // 拉开远景，呈现“一剑霜寒十四州”的山水留白
       const ang = elapsed * 0.18 + 0.8
       outPos
         .copy(swordPos)
-        .addScaledVector(swordFwd, -20)
-        .addScaledVector(_right, Math.sin(ang) * 24)
-        .addScaledVector(_up, 11)
-      outLook.copy(swordPos).addScaledVector(swordFwd, 10)
-      return 58
+        .addScaledVector(swordFwd, -16 * portraitBoost)
+        .addScaledVector(_right, Math.sin(ang) * 14 * portraitBoost)
+        .addScaledVector(_up, 9.5)
+      outLook.copy(swordPos).addScaledVector(swordFwd, 2.0)
+      return 56 + fovBonus
     }
   }
 }

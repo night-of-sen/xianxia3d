@@ -2,7 +2,7 @@ import { FilesetResolver, ImageSegmenter } from '@mediapipe/tasks-vision'
 
 /**
  * 抠图模式：
- * - ai    : Google MediaPipe AI 语义人像分割（本地 250KB 模型，精准抠真实生活照/复杂背景全身人像）
+ * - ai    : MediaPipe AI 语义人像分割（带 10 秒超时保护，超时自动降级本地智能抠图，绝不卡死）
  * - color : 极速纯色去背（适合白底/单色底二次元卡通图、表情包）
  * - none  : 保留原图并自动裁切圆角玉牌框
  */
@@ -11,9 +11,26 @@ export type CutoutMode = 'ai' | 'color' | 'none'
 export interface StandeeResult {
   dataUrl: string
   aspect: number
+  note?: string
 }
 
 let segmenterPromise: Promise<ImageSegmenter> | null = null
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const id = window.setTimeout(() => reject(new Error('timeout')), ms)
+    promise.then(
+      (v) => {
+        window.clearTimeout(id)
+        resolve(v)
+      },
+      (err) => {
+        window.clearTimeout(id)
+        reject(err)
+      },
+    )
+  })
+}
 
 async function getSegmenter(): Promise<ImageSegmenter> {
   if (!segmenterPromise) {
@@ -34,7 +51,7 @@ async function getSegmenter(): Promise<ImageSegmenter> {
       throw err
     })
   }
-  return segmenterPromise
+  return withTimeout(segmenterPromise, 10000)
 }
 
 function loadImage(file: File): Promise<HTMLImageElement> {
@@ -53,8 +70,7 @@ function loadImage(file: File): Promise<HTMLImageElement> {
   })
 }
 
-/** 裁剪多余透明留白，让人物脚底精准贴合飞剑 */
-function trimTransparent(canvas: HTMLCanvasElement): StandeeResult {
+function trimTransparent(canvas: HTMLCanvasElement, note?: string): StandeeResult {
   const w = canvas.width
   const h = canvas.height
   const ctx = canvas.getContext('2d')!
@@ -76,7 +92,7 @@ function trimTransparent(canvas: HTMLCanvasElement): StandeeResult {
   }
 
   if (maxX <= minX || maxY <= minY) {
-    return { dataUrl: canvas.toDataURL('image/png'), aspect: w / h }
+    return { dataUrl: canvas.toDataURL('image/png'), aspect: w / h, note }
   }
 
   const pad = 8
@@ -89,7 +105,23 @@ function trimTransparent(canvas: HTMLCanvasElement): StandeeResult {
   out.width = cw
   out.height = ch
   out.getContext('2d')!.drawImage(canvas, sx, sy, cw, ch, 0, 0, cw, ch)
-  return { dataUrl: out.toDataURL('image/png'), aspect: cw / ch }
+  return { dataUrl: out.toDataURL('image/png'), aspect: cw / ch, note }
+}
+
+/** 生成精致圆角玉牌卡片（保底方案或用户主动选择原图玉牌） */
+function makeJadeCard(src: HTMLCanvasElement, note?: string): StandeeResult {
+  const w = src.width
+  const h = src.height
+  const card = document.createElement('canvas')
+  card.width = w
+  card.height = h
+  const ctx = card.getContext('2d')!
+  const rad = Math.min(w, h) * 0.09
+  ctx.beginPath()
+  ctx.roundRect(0, 0, w, h, rad)
+  ctx.clip()
+  ctx.drawImage(src, 0, 0)
+  return { dataUrl: card.toDataURL('image/png'), aspect: w / h, note }
 }
 
 /**
@@ -101,7 +133,7 @@ export async function processStandeeImage(
   tolerance = 36,
 ): Promise<StandeeResult> {
   const img = await loadImage(file)
-  const maxSide = 768
+  const maxSide = 640
   const scale = Math.min(1, maxSide / Math.max(img.width, img.height))
   const w = Math.max(1, Math.round(img.width * scale))
   const h = Math.max(1, Math.round(img.height * scale))
@@ -115,7 +147,6 @@ export async function processStandeeImage(
   const imgData = ctx.getImageData(0, 0, w, h)
   const data = imgData.data
 
-  // 若本身已是透明底 PNG，直接保留透明并裁剪脚底留白
   const cornerIdx = [0, (w - 1) * 4, (h - 1) * w * 4, (w * h - 1) * 4]
   const alreadyTransparent = cornerIdx.some((i) => data[i + 3] < 24)
   if (alreadyTransparent) {
@@ -123,48 +154,41 @@ export async function processStandeeImage(
   }
 
   if (mode === 'none') {
-    // 保留原图：加上柔和圆角裁切，美观不生硬
-    const card = document.createElement('canvas')
-    card.width = w
-    card.height = h
-    const cctx = card.getContext('2d')!
-    const rad = Math.min(w, h) * 0.08
-    cctx.beginPath()
-    cctx.roundRect(0, 0, w, h, rad)
-    cctx.clip()
-    cctx.drawImage(canvas, 0, 0)
-    return { dataUrl: card.toDataURL('image/png'), aspect: w / h }
+    return makeJadeCard(canvas)
   }
 
   if (mode === 'ai') {
-    // 使用 MediaPipe AI 人像语义分割精准抠出人物主体
-    const seg = await getSegmenter()
-    const result = seg.segment(canvas)
-    const masks = result.confidenceMasks
-    if (masks && masks.length > 0) {
-      // selfie_segmenter 单通道或双通道：取前景人像概率（若 2 通道取索引 1，若 1 通道取索引 0）
-      const fgMask = masks.length > 1 ? masks[1] : masks[0]
-      const probs = fgMask.getAsFloat32Array()
-      let keptPixels = 0
-      for (let i = 0; i < w * h; i++) {
-        const p = probs[i]
-        // 柔和边缘羽化（0.25 ~ 0.65 平滑过渡），保留细腻发丝与轮廓
-        const alpha = Math.max(0, Math.min(1, (p - 0.25) / 0.4))
-        data[i * 4 + 3] = Math.round(alpha * 255)
-        if (alpha > 0.5) keptPixels++
+    try {
+      const seg = await getSegmenter()
+      const result = seg.segment(canvas)
+      const masks = result.confidenceMasks
+      if (masks && masks.length > 0) {
+        const fgMask = masks.length > 1 ? masks[1] : masks[0]
+        const probs = fgMask.getAsFloat32Array()
+        let keptPixels = 0
+        for (let i = 0; i < w * h; i++) {
+          const p = probs[i]
+          const alpha = Math.max(0, Math.min(1, (p - 0.28) / 0.36))
+          data[i * 4 + 3] = Math.round(alpha * 255)
+          if (alpha > 0.5) keptPixels++
+        }
+        result.close()
+        if (keptPixels > w * h * 0.02) {
+          ctx.putImageData(imgData, 0, 0)
+          return trimTransparent(canvas)
+        }
+      } else {
+        result.close()
       }
-      result.close()
-      // 若识别到了有效人像主体，写回并返回；否则自动回退到纯色抠图（例如非人形卡通/物体）
-      if (keptPixels > w * h * 0.015) {
-        ctx.putImageData(imgData, 0, 0)
-        return trimTransparent(canvas)
-      }
-    } else {
-      result.close()
+      // 未识别到真人时，用圆角玉牌保底（比强行色差抠图把复杂背景抠碎好看得多）
+      return makeJadeCard(canvas, '未检测到清晰人像主体，已自动切换为圆角玉牌')
+    } catch {
+      // 网络或手机浏览器不支持 WASM 时，10 秒超时后优雅降级，绝不卡死
+      return makeJadeCard(canvas, 'AI 抠图引擎加载超时，已自动切换为圆角玉牌（透明底PNG或白底图可选「白底卡通」）')
     }
   }
 
-  // 纯色背景去背（适合白底卡通/二次元/表情包，或 AI 未检测到真人的物体）
+  // 纯色背景去背（适合白底卡通/二次元/表情包）
   const seeds = cornerIdx.map((i) => [data[i], data[i + 1], data[i + 2]])
   const bgR = (seeds[0][0] + seeds[1][0] + seeds[2][0] + seeds[3][0]) / 4
   const bgG = (seeds[0][1] + seeds[1][1] + seeds[2][1] + seeds[3][1]) / 4
@@ -222,7 +246,6 @@ export async function processStandeeImage(
   return trimTransparent(canvas)
 }
 
-/** 处理上传的自拍/卡通头像为 3D 剑仙面部贴图（自动居中裁切圆形） */
 export async function processFaceAvatar(file: File): Promise<string> {
   const img = await loadImage(file)
   const size = 256

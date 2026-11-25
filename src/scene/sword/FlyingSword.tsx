@@ -418,7 +418,15 @@ export function FlyingSword() {
         store.setActiveShot(activeShot)
       }
 
-      const targetFov = computeDirectorCamera(activeShot, s.pos, tmp.fwd, s.directorTime, tmp.want, tmp.dirLook)
+      const targetFov = computeDirectorCamera(
+        activeShot,
+        s.pos,
+        tmp.fwd,
+        s.directorTime,
+        cam.aspect,
+        tmp.want,
+        tmp.dirLook,
+      )
       if (store.riderMode !== 'none') {
         tmp.dirLook.y += 0.85
       }
@@ -427,10 +435,11 @@ export function FlyingSword() {
         s.look.copy(tmp.dirLook)
         s.camInit = true
       }
-      cam.position.lerp(tmp.want, 1 - Math.exp(-3.2 * dt))
-      s.look.lerp(tmp.dirLook, 1 - Math.exp(-5.5 * dt))
+      // 提高导演模式跟拍响应速度，确保窄屏手机转弯时飞剑稳居画面中央
+      cam.position.lerp(tmp.want, 1 - Math.exp(-6.2 * dt))
+      s.look.lerp(tmp.dirLook, 1 - Math.exp(-10.5 * dt))
       cam.lookAt(s.look)
-      s.fov += (targetFov - s.fov) * (1 - Math.exp(-3 * dt))
+      s.fov += (targetFov - s.fov) * (1 - Math.exp(-3.5 * dt))
       cam.fov = s.fov
       cam.updateProjectionMatrix()
     } else {

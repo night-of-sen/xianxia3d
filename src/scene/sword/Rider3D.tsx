@@ -131,18 +131,16 @@ export function Rider3D() {
   const { scene, animations } = useGLTF(RIDER_URL)
   const cloned = useMemo(() => {
     const obj = cloneSkinned(scene)
-    // 归一化高度为 2.0，脚底精准贴地、水平居中
-    const box = new THREE.Box3().setFromObject(obj)
-    const size = box.getSize(new THREE.Vector3())
-    const center = box.getCenter(new THREE.Vector3())
-    const scale = 2.0 / Math.max(size.y, 0.01)
-    obj.scale.setScalar(scale)
-    obj.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale)
+    // Xbot.glb 原生高度约 1.78m、脚底在 y=0；直接缩放 1.15 避免 SkinnedMesh Box3 重复计算 Armature 0.01 缩放导致隐身
+    obj.scale.setScalar(1.15)
+    obj.position.set(0, 0, 0)
     obj.traverse((child) => {
       const mesh = child as THREE.Mesh
       if (mesh.isMesh) {
         mesh.castShadow = true
         mesh.receiveShadow = true
+        // 关键：SkinnedMesh 必须关闭视锥剔除，防止镜头靠近或旋转时模型被错误剔除消失
+        mesh.frustumCulled = false
       }
     })
     return obj
