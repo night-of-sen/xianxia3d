@@ -7,11 +7,13 @@
  * offset: 落地位置微调 [x,y,z]
  * emissiveBoost: 自发光材质强度倍增（灯笼泛光）
  */
+const M = `${import.meta.env.BASE_URL}models/`
+
 export const MODELS = {
-  pavilion: { url: '/models/pavilion.glb', fit: 'width', size: 13, yaw: 0, offset: [0, -0.1, 0], emissiveBoost: 3 },
-  bridge: { url: '/models/bridge.glb', fit: 'length', size: 40, emissiveBoost: 3 },
-  pine: { url: '/models/pine.glb', fit: 'height', size: 9, yaw: 0 },
-  peach: { url: '/models/peach_tree.glb', fit: 'height', size: 6.5, yaw: 0 },
+  pavilion: { url: `${M}pavilion.glb`, fit: 'width', size: 13, yaw: 0, offset: [0, -0.1, 0], emissiveBoost: 3 },
+  bridge: { url: `${M}bridge.glb`, fit: 'length', size: 40, emissiveBoost: 3 },
+  pine: { url: `${M}pine.glb`, fit: 'height', size: 9, yaw: 0 },
+  peach: { url: `${M}peach_tree.glb`, fit: 'height', size: 6.5, yaw: 0 },
 } as const
 
 export type ModelSlotName = keyof typeof MODELS

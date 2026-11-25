@@ -52,7 +52,7 @@ export function XianxiaScene() {
       {/* HDR 环境光：晨曦时作为天空背景，暮霞/月夜时仅提供环境反射，由 StylizedSky 接管天穹 */}
       <Suspense fallback={null}>
         <Environment
-          files="/hdri/dawn_sky.hdr"
+          files={`${import.meta.env.BASE_URL}hdri/dawn_sky.hdr`}
           background={w.useHdrBg}
           backgroundIntensity={w.envBgIntensity}
           backgroundRotation={[0, ENV_ROT_Y, 0]}

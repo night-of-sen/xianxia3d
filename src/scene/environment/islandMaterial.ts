@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 
-const T = '/textures/'
+const T = `${import.meta.env.BASE_URL}textures/`
 const URLS = [
   T + 'cliff_side_diff.jpg', T + 'cliff_side_nor_gl.jpg', T + 'cliff_side_rough.jpg',
   T + 'aerial_grass_rock_diff.jpg', T + 'aerial_grass_rock_nor_gl.jpg', T + 'aerial_grass_rock_rough.jpg',
