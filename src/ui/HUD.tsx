@@ -96,16 +96,18 @@ export function HUD() {
 
   return (
     <div className="pointer-events-none absolute inset-0 select-none font-serif text-[#f3ead2]">
-      {/* 左上：标题（加柔和文字阴影确保在亮天色下清晰可读） */}
-      <div className="absolute left-6 top-6">
-        <h1 className="text-3xl tracking-[0.4em] drop-shadow-[0_2px_10px_rgba(12,20,28,0.85)]">御剑·云海仙途</h1>
-        <p className="mt-1 text-xs tracking-[0.3em] text-[#f5e6be] drop-shadow-[0_1px_6px_rgba(12,20,28,0.9)]">
+      {/* 左上：标题（移动端自动紧凑不遮挡视野） */}
+      <div className="absolute left-4 top-4 sm:left-6 sm:top-6">
+        <h1 className="text-lg tracking-[0.25em] drop-shadow-[0_2px_10px_rgba(12,20,28,0.85)] sm:text-3xl sm:tracking-[0.4em]">
+          御剑·云海仙途
+        </h1>
+        <p className="mt-0.5 hidden text-xs tracking-[0.3em] text-[#f5e6be] drop-shadow-[0_1px_6px_rgba(12,20,28,0.9)] sm:block">
           XIANXIA · SWORD FLIGHT
         </p>
       </div>
 
       {/* 右上：核心功能工具栏 */}
-      <div className="pointer-events-auto absolute right-6 top-6 flex flex-col items-end gap-2.5">
+      <div className="pointer-events-auto absolute right-3 top-3 flex max-w-[66vw] flex-col items-end gap-2 sm:right-6 sm:top-6 sm:max-w-none sm:gap-2.5">
         <div className="flex flex-wrap items-center justify-end gap-2">
           {/* 模式切换 */}
           <button
@@ -251,8 +253,8 @@ export function HUD() {
         )}
       </div>
 
-      {/* 左下：速度 */}
-      <div className="xx-panel absolute bottom-6 left-6 px-4 py-2 text-sm tracking-widest">
+      {/* 左下：速度（移动端贴底居中偏左，避开虚拟摇杆） */}
+      <div className="xx-panel absolute bottom-3 left-4 px-3 py-1.5 text-xs tracking-widest sm:bottom-6 sm:left-6 sm:px-4 sm:py-2 sm:text-sm">
         剑速 <span className="text-[#ffd27a]">{speed}</span>
         {boosting && <span className="ml-2 text-[#5fe3d0]">冲刺</span>}
       </div>

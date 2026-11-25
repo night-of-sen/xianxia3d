@@ -1,5 +1,6 @@
 import { XianxiaScene } from './scene/XianxiaScene'
 import { HUD } from './ui/HUD'
+import { MobileControls } from './ui/MobileControls'
 import { useGameStore } from './store/useGameStore'
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
         <XianxiaScene />
       </div>
       <HUD />
+      <MobileControls />
     </div>
   )
 }

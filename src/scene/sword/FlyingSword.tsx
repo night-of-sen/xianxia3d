@@ -4,6 +4,7 @@ import { Trail } from '@react-three/drei'
 import * as THREE from 'three'
 import { PALETTE } from '../../config/theme'
 import { useGameStore, type ActiveShot, type SwordTheme } from '../../store/useGameStore'
+import { mobileInput } from '../../store/mobileInput'
 import {
   AUTO_SHOT_DURATION,
   AUTO_SHOT_ORDER,
@@ -306,7 +307,8 @@ export function FlyingSword() {
 
     const onPointerDown = (e: PointerEvent) => {
       if (e.button !== 0) return
-      if ((e.target as HTMLElement)?.closest('button')) return
+      const target = e.target as HTMLElement | null
+      if (target?.closest('button, [data-ui-control="true"]')) return
       st.current.dragging = true
       st.current.lastX = e.clientX
       st.current.lastY = e.clientY
@@ -431,9 +433,11 @@ export function FlyingSword() {
       // 自由御剑模式
       s.wasDirector = false
 
-      const yawIn = (k.has('KeyA') || k.has('ArrowLeft') ? 1 : 0) - (k.has('KeyD') || k.has('ArrowRight') ? 1 : 0)
-      const pitchIn = (k.has('KeyS') || k.has('ArrowDown') ? 1 : 0) - (k.has('KeyW') || k.has('ArrowUp') ? 1 : 0)
-      const boosting = k.has('Space')
+      const keyYaw = (k.has('KeyA') || k.has('ArrowLeft') ? 1 : 0) - (k.has('KeyD') || k.has('ArrowRight') ? 1 : 0)
+      const keyPitch = (k.has('KeyS') || k.has('ArrowDown') ? 1 : 0) - (k.has('KeyW') || k.has('ArrowUp') ? 1 : 0)
+      const yawIn = THREE.MathUtils.clamp(keyYaw + mobileInput.joyYaw + mobileInput.gyroYaw, -1, 1)
+      const pitchIn = THREE.MathUtils.clamp(keyPitch + mobileInput.joyPitch + mobileInput.gyroPitch, -1, 1)
+      const boosting = k.has('Space') || mobileInput.boosting
 
       if (store.isBoosting !== boosting) store.setBoosting(boosting)
 
