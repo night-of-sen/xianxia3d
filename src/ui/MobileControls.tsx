@@ -67,9 +67,9 @@ export function MobileControls() {
       dy = (dy / dist) * MAX_RADIUS
     }
     setKnob({ x: dx, y: dy, active: true })
-    // 左滑(dx<0) → 左转(+yaw)；下推(dy>0) → 拉升(+pitch)，上推(dy<0) → 俯冲(-pitch)
+    // 左滑(dx<0) → 左转(+yaw)；上推(dy<0) → 拉升(+pitch)，下推(dy>0) → 俯冲(-pitch)
     mobileInput.joyYaw = -(dx / MAX_RADIUS)
-    mobileInput.joyPitch = dy / MAX_RADIUS
+    mobileInput.joyPitch = -(dy / MAX_RADIUS)
   }
 
   const releaseJoystick = () => {
@@ -117,8 +117,8 @@ export function MobileControls() {
       >
         {/* 十字罗盘刻度 */}
         <div className="pointer-events-none absolute inset-3 rounded-full border border-dashed border-[#e8c878]/25" />
-        <span className="pointer-events-none absolute top-2 text-[10px] text-[#e8d9a8]/60">俯</span>
-        <span className="pointer-events-none absolute bottom-2 text-[10px] text-[#e8d9a8]/60">升</span>
+        <span className="pointer-events-none absolute top-2 text-[10px] text-[#e8d9a8]/60">升</span>
+        <span className="pointer-events-none absolute bottom-2 text-[10px] text-[#e8d9a8]/60">俯</span>
         <span className="pointer-events-none absolute left-2.5 text-[10px] text-[#e8d9a8]/60">左</span>
         <span className="pointer-events-none absolute right-2.5 text-[10px] text-[#e8d9a8]/60">右</span>
 
