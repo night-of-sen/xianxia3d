@@ -11,12 +11,14 @@ import {
   Square,
   Sun,
   Sunrise,
+  User,
   Video,
   Wind,
 } from 'lucide-react'
 import { WEATHER_PRESETS } from '../config/theme'
 import { useGameStore, type CameraShot, type ViewMode } from '../store/useGameStore'
 import { useVideoRecorder } from '../features/video/useVideoRecorder'
+import { RiderPanel } from './RiderPanel'
 
 const SHOTS: { id: CameraShot; label: string }[] = [
   { id: 'auto', label: '自动轮播' },
@@ -54,6 +56,8 @@ export function HUD() {
   const aspect = useGameStore((s) => s.aspect)
   const swordTheme = useGameStore((s) => s.swordTheme)
   const timeOfDay = useGameStore((s) => s.timeOfDay)
+  const riderMode = useGameStore((s) => s.riderMode)
+  const riderPanelOpen = useGameStore((s) => s.riderPanelOpen)
   const hudVisible = useGameStore((s) => s.hudVisible)
   const speed = useGameStore((s) => s.speed)
   const boosting = useGameStore((s) => s.isBoosting)
@@ -66,6 +70,7 @@ export function HUD() {
   const setAspect = useGameStore((s) => s.setAspect)
   const toggleSwordTheme = useGameStore((s) => s.toggleSwordTheme)
   const cycleTimeOfDay = useGameStore((s) => s.cycleTimeOfDay)
+  const toggleRiderPanel = useGameStore((s) => s.toggleRiderPanel)
   const triggerReset = useGameStore((s) => s.triggerReset)
 
   const { toggleRecording, captureScreenshot } = useVideoRecorder()
@@ -77,6 +82,7 @@ export function HUD() {
       const st = useGameStore.getState()
       if (e.code === 'KeyC') st.toggleMode()
       if (e.code === 'KeyV' && st.mode === 'free') st.cycleViewMode()
+      if (e.code === 'KeyP' && st.riderMode !== 'none') st.cycleRiderPose()
       if (e.code === 'KeyT') st.cycleTimeOfDay()
       if (e.code === 'KeyR') st.triggerReset()
       if (e.code === 'KeyH') st.toggleHud()
@@ -109,6 +115,19 @@ export function HUD() {
       {/* 右上：核心功能工具栏 */}
       <div className="pointer-events-auto absolute right-3 top-3 flex max-w-[66vw] flex-col items-end gap-2 sm:right-6 sm:top-6 sm:max-w-none sm:gap-2.5">
         <div className="flex flex-wrap items-center justify-end gap-2">
+          {/* 剑主化身定制按钮（A+B：3D 剑仙 / 上传人像立绘） */}
+          <button
+            type="button"
+            onClick={toggleRiderPanel}
+            className={`xx-panel flex cursor-pointer items-center gap-1.5 px-3 py-2 text-xs tracking-widest transition hover:border-[#5fe3d0] ${
+              riderPanelOpen || riderMode !== 'none' ? 'border-[#5fe3d0] text-[#5fe3d0]' : ''
+            }`}
+            title="选择 3D 剑仙、切换姿势或上传全身人像/卡通图御剑"
+          >
+            <User size={14} />
+            {riderMode === 'none' ? '剑主' : riderMode === '3d' ? '3D剑仙' : '灵影立绘'}
+          </button>
+
           {/* 模式切换 */}
           <button
             type="button"
@@ -252,6 +271,9 @@ export function HUD() {
           </div>
         )}
       </div>
+
+      {/* 剑主化身定制抽屉 */}
+      <RiderPanel />
 
       {/* 左下：速度（移动端贴底居中偏左，避开虚拟摇杆） */}
       <div className="xx-panel absolute bottom-3 left-4 px-3 py-1.5 text-xs tracking-widest sm:bottom-6 sm:left-6 sm:px-4 sm:py-2 sm:text-sm">

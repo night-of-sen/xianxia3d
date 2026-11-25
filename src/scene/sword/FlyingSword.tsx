@@ -5,6 +5,7 @@ import * as THREE from 'three'
 import { PALETTE } from '../../config/theme'
 import { useGameStore, type ActiveShot, type SwordTheme } from '../../store/useGameStore'
 import { mobileInput } from '../../store/mobileInput'
+import { SwordRider } from './SwordRider'
 import {
   AUTO_SHOT_DURATION,
   AUTO_SHOT_ORDER,
@@ -418,6 +419,9 @@ export function FlyingSword() {
       }
 
       const targetFov = computeDirectorCamera(activeShot, s.pos, tmp.fwd, s.directorTime, tmp.want, tmp.dirLook)
+      if (store.riderMode !== 'none') {
+        tmp.dirLook.y += 0.85
+      }
       if (!s.camInit) {
         cam.position.copy(tmp.want)
         s.look.copy(tmp.dirLook)
@@ -493,10 +497,13 @@ export function FlyingSword() {
         cam.lookAt(s.look)
         s.fov += (70 + boostK * 18 - s.fov) * (1 - Math.exp(-4 * dt))
       } else {
-        // 第三人称近景跟拍：略偏右上方构图，清晰展现玄铁飞剑细节，不遮挡前方仙山
+        // 第三人称近景跟拍：有剑主时自动抬高视线与微调距离，将人物+飞剑置于黄金构图
+        const hasRider = store.riderMode !== 'none'
         tmp.e.set(s.pitch * 0.55 + s.orbitPitch, s.yaw + s.orbitYaw, 0)
         tmp.q.setFromEuler(tmp.e)
-        tmp.off.set(0.65, 1.35 + boostK * 0.25, s.camDist + boostK * 2.2).applyQuaternion(tmp.q)
+        tmp.off
+          .set(0.65, (hasRider ? 2.15 : 1.35) + boostK * 0.25, s.camDist + (hasRider ? 1.4 : 0) + boostK * 2.2)
+          .applyQuaternion(tmp.q)
         tmp.want.copy(s.pos).add(tmp.off)
         if (!s.camInit) {
           cam.position.copy(tmp.want)
@@ -505,6 +512,7 @@ export function FlyingSword() {
         }
         cam.position.lerp(tmp.want, 1 - Math.exp(-6.5 * dt))
         tmp.want.copy(s.pos).addScaledVector(tmp.fwd, s.dragging ? 1.5 : 8)
+        if (hasRider) tmp.want.y += 0.95
         s.look.lerp(tmp.want, 1 - Math.exp(-9 * dt))
         cam.lookAt(s.look)
         s.fov += (54 + boostK * 18 - s.fov) * (1 - Math.exp(-4 * dt))
@@ -524,6 +532,7 @@ export function FlyingSword() {
   return (
     <group ref={group} position={[SPAWN_POS.x, SPAWN_POS.y, SPAWN_POS.z]}>
       <SwordModel theme={swordTheme} />
+      <SwordRider />
       <pointLight
         color={swordTheme === 'jade' ? PALETTE.jade : PALETTE.gold}
         intensity={12}

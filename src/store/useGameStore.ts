@@ -13,6 +13,12 @@ export type AspectRatio = '16:9' | '9:16'
 export type SwordTheme = 'jade' | 'gold'
 /** 自由模式视角：third = 御剑跟拍；first = 踏剑第一人称；nose = 剑尖疾驰 */
 export type ViewMode = 'third' | 'first' | 'nose'
+/** 剑主化身模式：none = 纯飞剑；3d = 真3D剑仙；2.5d = 上传图片2.5D灵影立绘 */
+export type RiderMode = 'none' | '3d' | '2.5d'
+/** 剑主姿势 */
+export type RiderPose = 'stand' | 'charge' | 'meditate' | 'salute'
+/** 3D 剑仙衣袍配色 */
+export type RobeTheme = 'white' | 'jade' | 'dark'
 
 interface GameState {
   mode: GameMode
@@ -22,6 +28,14 @@ interface GameState {
   aspect: AspectRatio
   swordTheme: SwordTheme
   timeOfDay: TimeOfDay
+  riderMode: RiderMode
+  riderPose: RiderPose
+  robeTheme: RobeTheme
+  faceImageUrl: string | null
+  standeeImageUrl: string | null
+  standeeAspect: number
+  standeeScale: number
+  riderPanelOpen: boolean
   isBoosting: boolean
   isRecording: boolean
   recordSeconds: number
@@ -39,6 +53,15 @@ interface GameState {
   setAspect: (aspect: AspectRatio) => void
   toggleSwordTheme: () => void
   cycleTimeOfDay: () => void
+  setRiderMode: (m: RiderMode) => void
+  setRiderPose: (p: RiderPose) => void
+  cycleRiderPose: () => void
+  setRobeTheme: (t: RobeTheme) => void
+  setFaceImage: (url: string | null) => void
+  setStandeeImage: (url: string | null, aspect?: number) => void
+  setStandeeScale: (s: number) => void
+  toggleRiderPanel: () => void
+  setRiderPanelOpen: (v: boolean) => void
   setBoosting: (v: boolean) => void
   setRecording: (v: boolean) => void
   setRecordSeconds: (s: number) => void
@@ -49,6 +72,7 @@ interface GameState {
 
 const VIEW_ORDER: ViewMode[] = ['third', 'first', 'nose']
 const TIME_ORDER: TimeOfDay[] = ['dawn', 'sunset', 'night']
+const POSE_ORDER: RiderPose[] = ['stand', 'charge', 'meditate', 'salute']
 
 export const useGameStore = create<GameState>((set) => ({
   mode: 'free',
@@ -58,6 +82,14 @@ export const useGameStore = create<GameState>((set) => ({
   aspect: '16:9',
   swordTheme: 'jade',
   timeOfDay: 'dawn',
+  riderMode: 'none',
+  riderPose: 'stand',
+  robeTheme: 'white',
+  faceImageUrl: null,
+  standeeImageUrl: null,
+  standeeAspect: 0.65,
+  standeeScale: 1,
+  riderPanelOpen: false,
   isBoosting: false,
   isRecording: false,
   recordSeconds: 0,
@@ -76,6 +108,16 @@ export const useGameStore = create<GameState>((set) => ({
   toggleSwordTheme: () => set((s) => ({ swordTheme: s.swordTheme === 'jade' ? 'gold' : 'jade' })),
   cycleTimeOfDay: () =>
     set((s) => ({ timeOfDay: TIME_ORDER[(TIME_ORDER.indexOf(s.timeOfDay) + 1) % TIME_ORDER.length] })),
+  setRiderMode: (riderMode) => set({ riderMode }),
+  setRiderPose: (riderPose) => set({ riderPose }),
+  cycleRiderPose: () =>
+    set((s) => ({ riderPose: POSE_ORDER[(POSE_ORDER.indexOf(s.riderPose) + 1) % POSE_ORDER.length] })),
+  setRobeTheme: (robeTheme) => set({ robeTheme }),
+  setFaceImage: (faceImageUrl) => set({ faceImageUrl }),
+  setStandeeImage: (standeeImageUrl, standeeAspect = 0.65) => set({ standeeImageUrl, standeeAspect }),
+  setStandeeScale: (standeeScale) => set({ standeeScale }),
+  toggleRiderPanel: () => set((s) => ({ riderPanelOpen: !s.riderPanelOpen })),
+  setRiderPanelOpen: (riderPanelOpen) => set({ riderPanelOpen }),
   setBoosting: (isBoosting) => set({ isBoosting }),
   setRecording: (isRecording) => set({ isRecording }),
   setRecordSeconds: (recordSeconds) => set({ recordSeconds }),
