@@ -1,0 +1,36 @@
+@import 'tailwindcss';
+
+html,
+body,
+#root {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #1b2226;
+}
+
+body {
+  font-family: 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
+}
+
+/* 玄黑磨砂 + 鎏金细边 面板 */
+.xx-panel {
+  background: rgba(20, 26, 30, 0.45);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(232, 200, 120, 0.45);
+  border-radius: 2px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.xx-key {
+  display: inline-block;
+  margin: 0 0.35em 0 0.9em;
+  padding: 0 0.45em;
+  border: 1px solid rgba(232, 200, 120, 0.6);
+  border-radius: 2px;
+  color: #ffd27a;
+}
+.xx-key:first-child {
+  margin-left: 0;
+}
