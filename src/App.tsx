@@ -1,6 +1,7 @@
 import { XianxiaScene } from './scene/XianxiaScene'
 import { HUD } from './ui/HUD'
 import { MobileControls } from './ui/MobileControls'
+import { LoadingScreen } from './ui/LoadingScreen'
 import { useGameStore } from './store/useGameStore'
 
 export default function App() {
@@ -8,7 +9,7 @@ export default function App() {
   const isVertical = aspect === '9:16'
 
   return (
-    <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[#111619]">
+    <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[#0c1720]">
       {/* 16:9 全屏横屏 / 9:16 竖屏短视频原生画布比例（录制即所得） */}
       <div
         className={
@@ -21,6 +22,7 @@ export default function App() {
       </div>
       <HUD />
       <MobileControls />
+      <LoadingScreen />
     </div>
   )
 }

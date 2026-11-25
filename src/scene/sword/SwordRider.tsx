@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { useGameStore } from '../../store/useGameStore'
 import { Rider3D } from './Rider3D'
 import { RiderStandee } from './RiderStandee'
@@ -11,5 +12,9 @@ export function SwordRider() {
   if (riderMode === 'none') return null
   if (mode === 'free' && (viewMode === 'first' || viewMode === 'nose')) return null
 
-  return riderMode === '3d' ? <Rider3D /> : <RiderStandee />
+  return (
+    <Suspense fallback={null}>
+      {riderMode === '3d' ? <Rider3D /> : <RiderStandee />}
+    </Suspense>
+  )
 }

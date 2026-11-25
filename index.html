@@ -2,10 +2,116 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>御剑·云海仙途</title>
+    <style>
+      html, body, #root {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #0c1720;
+      }
+      /* 首屏零延迟国风仙侠加载幕布：在 JS 下载前立即呈现，彻底消除黑屏 */
+      #boot-loader {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle at 50% 42%, #1d3544 0%, #0e1b26 58%, #070d14 100%);
+        color: #f3ead2;
+        font-family: 'Noto Serif SC', 'Songti SC', 'STSong', serif;
+        transition: opacity 0.65s ease, visibility 0.65s ease;
+      }
+      #boot-loader.fade-out {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      .boot-ring {
+        position: relative;
+        width: 132px;
+        height: 132px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .boot-ring svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        animation: boot-spin 12s linear infinite;
+      }
+      .boot-ring .inner-ring {
+        animation: boot-spin-rev 8s linear infinite;
+      }
+      .boot-sword {
+        width: 34px;
+        height: 76px;
+        filter: drop-shadow(0 0 12px rgba(95, 227, 208, 0.85));
+        animation: boot-float 2.4s ease-in-out infinite;
+      }
+      .boot-title {
+        margin-top: 24px;
+        font-size: 24px;
+        letter-spacing: 0.45em;
+        padding-left: 0.45em;
+        color: #f7eed6;
+        text-shadow: 0 0 18px rgba(255, 210, 122, 0.45);
+      }
+      .boot-poem {
+        margin-top: 10px;
+        font-size: 12px;
+        letter-spacing: 0.35em;
+        color: rgba(232, 217, 168, 0.72);
+      }
+      .boot-bar {
+        margin-top: 22px;
+        width: 180px;
+        height: 2px;
+        background: rgba(232, 200, 120, 0.2);
+        overflow: hidden;
+        border-radius: 2px;
+      }
+      .boot-bar-fill {
+        width: 40%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, #5fe3d0, #ffd27a, transparent);
+        animation: boot-sweep 1.5s ease-in-out infinite;
+      }
+      @keyframes boot-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      @keyframes boot-spin-rev { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+      @keyframes boot-float { 0%,100% { transform: translateY(3px); } 50% { transform: translateY(-6px); } }
+      @keyframes boot-sweep { 0% { transform: translateX(-100%); } 100% { transform: translateX(300%); } }
+    </style>
   </head>
   <body>
+    <div id="boot-loader">
+      <div class="boot-ring">
+        <svg viewBox="0 0 120 120" fill="none">
+          <circle cx="60" cy="60" r="56" stroke="rgba(255,210,122,0.55)" stroke-width="1" stroke-dasharray="6 4" />
+          <circle cx="60" cy="60" r="46" stroke="rgba(95,227,208,0.45)" stroke-width="1" stroke-dasharray="14 6" />
+        </svg>
+        <svg class="inner-ring" viewBox="0 0 120 120" fill="none">
+          <polygon points="60,12 102,84 18,84" stroke="rgba(255,210,122,0.35)" stroke-width="0.9" />
+          <polygon points="60,108 18,36 102,36" stroke="rgba(95,227,208,0.35)" stroke-width="0.9" />
+        </svg>
+        <svg class="boot-sword" viewBox="0 0 40 90" fill="none" style="position:relative;animation:boot-float 2.4s ease-in-out infinite;">
+          <path d="M20 4 L25 18 L24 62 L16 62 L15 18 Z" fill="#5fe3d0" />
+          <rect x="19" y="10" width="2" height="50" fill="#ffffff" />
+          <rect x="9" y="61" width="22" height="4" rx="2" fill="#ffd27a" />
+          <rect x="18" y="65" width="4" height="14" fill="#c89e52" />
+          <circle cx="20" cy="82" r="3.5" fill="#ffd27a" />
+        </svg>
+      </div>
+      <div class="boot-title">御剑·云海仙途</div>
+      <div class="boot-poem">御剑乘风来 · 凝聚云海灵气</div>
+      <div class="boot-bar"><div class="boot-bar-fill"></div></div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
